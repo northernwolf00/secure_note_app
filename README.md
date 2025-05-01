@@ -19,11 +19,6 @@ A cross-platform **Flutter** application to securely create, store, and manage n
 - 📤 Share notes securely with `share_plus`  
 - 📦 File picker support  
 
----
-
-## 📱 Screenshots
-
-*(Add your app screenshots here)*
 
 ---
 
