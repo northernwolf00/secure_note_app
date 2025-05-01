@@ -9,7 +9,6 @@ import 'package:secure_note_app/presentation/widgets/not_found_screen.dart';
 class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {
  
-    final args = settings.arguments;
 
     switch (settings.name) {
        case '/':
