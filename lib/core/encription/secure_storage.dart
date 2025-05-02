@@ -95,7 +95,7 @@ static Future<void> syncLocalNotesToFirebase(String userId) async {
   try {
     localNotes = await loadLocalNotes();
   } catch (e) {
-    print("Error loading local notes for sync: $e");
+    
     return;
   }
 
@@ -122,7 +122,7 @@ static Future<void> syncLocalNotesToFirebase(String userId) async {
 
       note['isSynced'] = true;
     } catch (e) {
-      print("Error syncing note: $e");
+     
     }
   }
 
@@ -131,7 +131,7 @@ static Future<void> syncLocalNotesToFirebase(String userId) async {
     final encrypted = encrypt(json.encode(localNotes));
     await file.writeAsString(encrypted);
   } catch (e) {
-    print("Error saving synced notes: $e");
+   
   }
 }
 

@@ -12,8 +12,11 @@ class SignInScreen extends StatefulWidget {
 class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
+ bool isLoading = false;
   Future<void> signIn() async {
+      setState(() {
+      isLoading = true;
+    });
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text.trim(),
@@ -27,6 +30,10 @@ class _SignInScreenState extends State<SignInScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: ${e.toString()}")),
       );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -53,7 +60,7 @@ class _SignInScreenState extends State<SignInScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
+            const  Text(
                 "Welcome Back",
                 style: TextStyle(
                   fontSize: 28,
@@ -81,7 +88,9 @@ class _SignInScreenState extends State<SignInScreen> {
               const SizedBox(height: 32),
               SizedBox(
                 height: 50,
-                child: ElevatedButton(
+                child:isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    :  ElevatedButton(
                   onPressed: signIn,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,

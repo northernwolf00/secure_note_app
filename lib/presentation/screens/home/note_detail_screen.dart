@@ -91,9 +91,10 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         );
         Navigator.pop(context, true);
       } else {
+         Navigator.pop(context, true);
         // Offline - Save only locally
         await SecureStorage.saveNoteLocally(localNote);
-        Navigator.pop(context, true);
+       
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No internet. Saved locally only.')),
         );
@@ -114,6 +115,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       setState(() {
         _isSaving = false;
       });
+       Navigator.pop(context, true);
     }
   }
 
@@ -187,6 +189,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           ),
           onPressed: () {
             _isSaving ? null : saveNote();
+             Navigator.pop(context, true);
           },
           label: const Text(
             'Save Note',

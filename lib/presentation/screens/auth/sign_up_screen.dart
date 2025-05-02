@@ -12,8 +12,11 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
+ bool isLoading = false;
   Future<void> signUp() async {
+       setState(() {
+      isLoading = true;
+    });
     if (emailController.text.isEmpty || passwordController.text.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please enter a valid email and password (min 6 chars).")),
@@ -38,6 +41,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: ${e.toString()}")),
       );
+    }finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -92,7 +99,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 32),
               SizedBox(
                 height: 50,
-                child: ElevatedButton(
+                child:isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    :  ElevatedButton(
                   onPressed: signUp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,

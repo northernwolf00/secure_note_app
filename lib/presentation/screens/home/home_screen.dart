@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:secure_note_app/core/encription/secure_storage.dart';
 import 'package:secure_note_app/core/utils/app_colors.dart';
 import 'package:secure_note_app/data/model/note_model.dart';
+import 'package:secure_note_app/presentation/screens/auth/sign_in_screen.dart';
 import 'package:secure_note_app/presentation/screens/bookmark/bookmark_screen.dart';
 import 'package:secure_note_app/presentation/screens/home/note_detail_screen.dart';
 import 'package:secure_note_app/presentation/screens/password/add_password_screen.dart';
@@ -131,13 +132,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Colors.white,
                 fontWeight: FontWeight.bold)),
         backgroundColor: AppColors.primary,
-         leading: Builder(
-      builder: (context) => IconButton(
-        icon: const Icon(Icons.menu),
-        color: Colors.white,          // ← your desired color
-        onPressed: () => Scaffold.of(context).openDrawer(),
-      ),
-    ),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            color: Colors.white, // ← your desired color
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         elevation: 0,
         actions: [
           IconButton(
@@ -207,14 +208,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   ));
                 },
               ),
-              ListTile(
-                leading: const Icon(Icons.logout, color: Colors.white),
-                title: const Text('Sign Out',
-                    style: TextStyle(color: Colors.white, fontSize: 18)),
-                onTap: () {
-                  FirebaseAuth.instance.signOut();
-                },
-              ),
+              GestureDetector(
+                onTap: () => print("Tapped!"),
+                child: ListTile(
+                  leading: const Icon(Icons.logout, color: Colors.white),
+                  title: const Text('Sign Out',
+                      style: TextStyle(color: Colors.white, fontSize: 18)),
+                  onTap: () {
+                    FirebaseAuth.instance.signOut();
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const SignInScreen()),
+                      (route) => false,
+                    );
+                  },
+                ),
+              )
             ],
           ),
         ),
@@ -245,9 +253,9 @@ class _HomeScreenState extends State<HomeScreen> {
           );
           if (result == true) {
             if (_isOnline) {
-              setState(() {}); // reload stream
+              setState(() {});
             } else {
-              checkConnectionAndLoad(); // reload local
+              checkConnectionAndLoad();
             }
           }
         },
