@@ -30,65 +30,87 @@ class _SignInScreenState extends State<SignInScreen> {
     }
   }
 
+  InputDecoration _inputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      filled: true,
+      fillColor: Colors.grey.shade100,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text("Sign In",
+      backgroundColor: Colors.grey.shade50,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                "Welcome Back",
                 style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary)),
-            const SizedBox(height: 32),
-            TextField(
-              controller: emailController,
-              decoration: InputDecoration(
-                hintText: 'Email',
-                fillColor: AppColors.inputFill,
-                filled: true,
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                hintText: 'Password',
-                fillColor: AppColors.inputFill,
-                filled: true,
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              const SizedBox(height: 8),
+              Text(
+                "Please sign in to continue",
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
               ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.button,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 80, vertical: 16),
+              const SizedBox(height: 40),
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: _inputDecoration('Email'),
               ),
-              onPressed: () {
-                signIn();
-              },
-              child: const Text("Sign In"),
-            ),
-         const   SizedBox(height: 40),
-            TextButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/sign-up');
-              },
-              child: const Text("Don't have an account? Sign Up"),
-            ),
-          ],
+              const SizedBox(height: 20),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: _inputDecoration('Password'),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: signIn,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    "Sign In",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40),
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/sign-up');
+                  },
+                  child: Text(
+                    "Don't have an account? Sign Up",
+                    style: TextStyle(color: Colors.blue.shade700),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

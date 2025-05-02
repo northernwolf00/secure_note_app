@@ -7,8 +7,8 @@ import 'package:secure_note_app/core/utils/app_colors.dart';
 import 'package:secure_note_app/data/model/note_model.dart';
 import 'package:secure_note_app/presentation/screens/bookmark/bookmark_screen.dart';
 import 'package:secure_note_app/presentation/screens/home/note_detail_screen.dart';
+import 'package:secure_note_app/presentation/screens/password/add_password_screen.dart';
 import 'package:secure_note_app/presentation/widgets/search_delegate.dart';
-
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -29,38 +29,34 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> checkConnectionAndLoad() async {
-  final connectivityResult = await Connectivity().checkConnectivity();
-  setState(() {
-    _isOnline = connectivityResult != ConnectivityResult.none;
-  });
-  try {
-          final userId = FirebaseAuth.instance.currentUser?.uid;
-          if (userId != null) {
-            await SecureStorage.syncLocalNotesToFirebase(userId);
-            debugPrint('Sync failed: Successfully synced local notes to Firebase');
-          }
-        } catch (e) {
-          debugPrint('Sync failed: $e');
-        } 
-
-  if (!_isOnline) {
-    final localData = await SecureStorage.loadLocalNotes();
+    final connectivityResult = await Connectivity().checkConnectivity();
     setState(() {
-      _localNotes = localData.map((map) => Note(
-        id: map['id'],
-        title: SecureStorage.decrypt(map['title']),
-        content: SecureStorage.decrypt(map['content']),
-        isBookmarked: map['isBookmarked'] ?? false,
-      )).toList();
+      _isOnline = connectivityResult != ConnectivityResult.none;
     });
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId != null) {
+        await SecureStorage.syncLocalNotesToFirebase(userId);
+        debugPrint('Sync failed: Successfully synced local notes to Firebase');
+      }
+    } catch (e) {
+      debugPrint('Sync failed: $e');
+    }
+
+    if (!_isOnline) {
+      final localData = await SecureStorage.loadLocalNotes();
+      setState(() {
+        _localNotes = localData
+            .map((map) => Note(
+                  id: map['id'],
+                  title: SecureStorage.decrypt(map['title']),
+                  content: SecureStorage.decrypt(map['content']),
+                  isBookmarked: map['isBookmarked'] ?? false,
+                ))
+            .toList();
+      });
+    }
   }
-
-
-
-  
-}
-
-
 
   Stream<List<Note>> loadNotes() {
     return FirebaseFirestore.instance
@@ -81,35 +77,33 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void toggleBookmark(Note note) async {
-  final updatedNote = Note(
-    id: note.id,
-    title: note.title,
-    content: note.content,
-    isBookmarked: !note.isBookmarked,
-  );
+    final updatedNote = Note(
+      id: note.id,
+      title: note.title,
+      content: note.content,
+      isBookmarked: !note.isBookmarked,
+    );
 
-  if (_isOnline) {
-    await FirebaseFirestore.instance.collection('notes').doc(note.id).update({
-      'isBookmarked': updatedNote.isBookmarked,
-    });
-  } else {
-    await SecureStorage.updateLocalNote({
-      'id': updatedNote.id,
-      'title': SecureStorage.encrypt(updatedNote.title),
-      'content': SecureStorage.encrypt(updatedNote.content),
-      'isBookmarked': updatedNote.isBookmarked,
-    });
+    if (_isOnline) {
+      await FirebaseFirestore.instance.collection('notes').doc(note.id).update({
+        'isBookmarked': updatedNote.isBookmarked,
+      });
+    } else {
+      await SecureStorage.updateLocalNote({
+        'id': updatedNote.id,
+        'title': SecureStorage.encrypt(updatedNote.title),
+        'content': SecureStorage.encrypt(updatedNote.content),
+        'isBookmarked': updatedNote.isBookmarked,
+      });
 
-    setState(() {
-      final index = _localNotes.indexWhere((n) => n.id == updatedNote.id);
-      if (index != -1) {
-        _localNotes[index] = updatedNote;
-      }
-    });
+      setState(() {
+        final index = _localNotes.indexWhere((n) => n.id == updatedNote.id);
+        if (index != -1) {
+          _localNotes[index] = updatedNote;
+        }
+      });
+    }
   }
-}
-
-
 
   void deleteNote(String id) async {
     if (_isOnline) {
@@ -122,8 +116,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  
-
   @override
   Widget build(BuildContext context) {
     if (userId == null) {
@@ -133,8 +125,19 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('My Notes', style: TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('My Notes',
+            style: TextStyle(
+                fontSize: 24,
+                color: Colors.white,
+                fontWeight: FontWeight.bold)),
         backgroundColor: AppColors.primary,
+         leading: Builder(
+      builder: (context) => IconButton(
+        icon: const Icon(Icons.menu),
+        color: Colors.white,          // ← your desired color
+        onPressed: () => Scaffold.of(context).openDrawer(),
+      ),
+    ),
         elevation: 0,
         actions: [
           IconButton(
@@ -146,7 +149,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   delegate: NoteSearchDelegate(loadNotes()),
                 );
                 if (result != null) {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => NoteDetailScreen(note: result)));
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => NoteDetailScreen(note: result)));
                 }
               }
             },
@@ -154,21 +160,76 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.bookmark, color: Colors.white),
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(
-                builder: (_) => BookmarkScreen(userId: userId),
-              ));
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BookmarkScreen(userId: userId),
+                  ));
             },
           ),
         ],
+      ),
+      drawer: Drawer(
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppColors.primary, Colors.blueGrey],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              const DrawerHeader(
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(20),
+                    bottomRight: Radius.circular(20),
+                  ),
+                ),
+                child: Center(
+                  child: Text('Menu',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold)),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.lock, color: Colors.white),
+                title: const Text('Settings Lock',
+                    style: TextStyle(color: Colors.white, fontSize: 18)),
+                onTap: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const SettingsScreen(),
+                  ));
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.logout, color: Colors.white),
+                title: const Text('Sign Out',
+                    style: TextStyle(color: Colors.white, fontSize: 18)),
+                onTap: () {
+                  FirebaseAuth.instance.signOut();
+                },
+              ),
+            ],
+          ),
+        ),
       ),
       body: _isOnline
           ? StreamBuilder<List<Note>>(
               stream: loadNotes(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-                if (snapshot.hasError) return const Center(child: Text("Error loading notes"));
+                if (snapshot.connectionState == ConnectionState.waiting)
+                  return const Center(child: CircularProgressIndicator());
+                if (snapshot.hasError)
+                  return const Center(child: Text("Error loading notes"));
                 final notes = snapshot.data ?? [];
-                if (notes.isEmpty) return const Center(child: Text("No notes found."));
+                if (notes.isEmpty)
+                  return const Center(child: Text("No notes found."));
                 return buildNoteGrid(notes);
               },
             )
@@ -212,7 +273,8 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             child: Card(
               elevation: 3,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
               child: Padding(
                 padding: const EdgeInsets.all(8),
                 child: Stack(
@@ -249,10 +311,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           }
                         },
                         itemBuilder: (context) => [
-                          const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                          const PopupMenuItem(
+                              value: 'delete', child: Text('Delete')),
                           PopupMenuItem(
                             value: 'bookmark',
-                            child: Text(note.isBookmarked ? 'Unbookmark' : 'Bookmark'),
+                            child: Text(
+                                note.isBookmarked ? 'Unbookmark' : 'Bookmark'),
                           ),
                         ],
                         icon: const Icon(Icons.more_vert, size: 20),
@@ -268,4 +332,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-
