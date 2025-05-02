@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:encrypt/encrypt.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -60,51 +61,80 @@ class SecureStorage {
     return List<Map<String, dynamic>>.from(json.decode(decrypted));
   }
 
-//   static Future<List<Map<String, dynamic>>> loadLocalNotes() async {
-//     final file = await _getLocalFile();
-//     if (!await file.exists()) return [];
-//     final content = await file.readAsString();
-//     final decrypted = decrypt(content);
-//     return List<Map<String, dynamic>>.from(json.decode(decrypted));
-//   }
+static Future<void> updateLocalNote(Map<String, dynamic> updatedNote) async {
+  final file = await _getLocalFile();
+  if (!await file.exists()) return;
 
-//   /// Overwrites disk with given list (encrypting as a batch).
-//   static Future<void> saveAllLocalNotes(List<Map<String, dynamic>> notes) async {
-//     final file = await _getLocalFile();
-//     final encrypted = encrypt(json.encode(notes));
-//     await file.writeAsString(encrypted);
-//   }
+  final content = await file.readAsString();
+  final decrypted = decrypt(content);
+  List<Map<String, dynamic>> notes = List<Map<String, dynamic>>.from(json.decode(decrypted));
 
-//   /// Adds or updates one note by `id`.
-//   static Future<void> saveNoteLocally(Map<String, dynamic> note) async {
-//     final notes = await loadLocalNotes();
-//     // remove any existing with same id
-//     notes.removeWhere((n) => n['id'] == note['id']);
-//     notes.add(note);
-//     await saveAllLocalNotes(notes);
-//   }
+  final index = notes.indexWhere((n) => n['id'] == updatedNote['id']);
+  if (index != -1) {
+    notes[index] = updatedNote;
+    final encrypted = encrypt(json.encode(notes));
+    await file.writeAsString(encrypted);
+  }
+}
+static Future<void> deleteLocalNote(String id) async {
+  final file = await _getLocalFile();
+  if (!await file.exists()) return;
 
-//   /// Deletes one note by `id`.
-//   static Future<void> deleteNoteLocally(String id) async {
-//     final notes = await loadLocalNotes();
-//     notes.removeWhere((n) => n['id'] == id);
-//     await saveAllLocalNotes(notes);
-//   }
+  final content = await file.readAsString();
+  final decrypted = decrypt(content);
+  List<Map<String, dynamic>> notes = List<Map<String, dynamic>>.from(json.decode(decrypted));
 
-//   /// Returns only bookmarked notes.
-//   static Future<List<Map<String, dynamic>>> loadBookmarked() async {
-//     final notes = await loadLocalNotes();
-//     return notes.where((n) => n['isBookmarked'] == true).toList();
-//   }
+  notes.removeWhere((note) => note['id'] == id);
+  final encrypted = encrypt(json.encode(notes));
+  await file.writeAsString(encrypted);
+}
 
-//   /// Searches locally by title or content.
-//   static Future<List<Map<String, dynamic>>> searchLocal(String query) async {
-//     final q = query.toLowerCase();
-//     final notes = await loadLocalNotes();
-//     return notes.where((n) {
-//       final title = decrypt(n['title']).toLowerCase();
-//       final content = decrypt(n['content']).toLowerCase();
-//       return title.contains(q) || content.contains(q);
-//     }).toList();
-//   }
+static Future<void> syncLocalNotesToFirebase(String userId) async {
+  List<Map<String, dynamic>> localNotes = [];
+
+  try {
+    localNotes = await loadLocalNotes();
+  } catch (e) {
+    print("Error loading local notes for sync: $e");
+    return;
+  }
+
+  final unsyncedNotes = localNotes.where((n) => n['isSynced'] == false).toList();
+
+  for (var note in unsyncedNotes) {
+    try {
+      final noteData = {
+        'title': note['title'],
+        'content': note['content'],
+        'userId': userId,
+        'timestamp': FieldValue.serverTimestamp(),
+        'isBookmarked': note['isBookmarked'] ?? false,
+      };
+
+      final docId = note['id'];
+
+      if (docId != null && docId.toString().isNotEmpty) {
+        await FirebaseFirestore.instance.collection('notes').doc(docId).set(noteData);
+      } else {
+        final docRef = await FirebaseFirestore.instance.collection('notes').add(noteData);
+        note['id'] = docRef.id;
+      }
+
+      note['isSynced'] = true;
+    } catch (e) {
+      print("Error syncing note: $e");
+    }
+  }
+
+  try {
+    final file = await _getLocalFile();
+    final encrypted = encrypt(json.encode(localNotes));
+    await file.writeAsString(encrypted);
+  } catch (e) {
+    print("Error saving synced notes: $e");
+  }
+}
+
+
+
 }

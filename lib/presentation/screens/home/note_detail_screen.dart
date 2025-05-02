@@ -43,22 +43,20 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     final encryptedTitle = SecureStorage.encrypt(title);
     final encryptedContent = SecureStorage.encrypt(content);
 
-final userId = FirebaseAuth.instance.currentUser?.uid;
-if (userId == null) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('You must be logged in.')),
-  );
-  return;
-}
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You must be logged in.')),
+      );
+      return;
+    }
 
-
-   final firestoreData = {
-  'title': encryptedTitle,
-  'content': encryptedContent,
-  'userId': userId,
-  'timestamp': FieldValue.serverTimestamp(),
-};
-
+    final firestoreData = {
+      'title': encryptedTitle,
+      'content': encryptedContent,
+      'userId': userId,
+      'timestamp': FieldValue.serverTimestamp(),
+    };
 
     final localNote = {
       'id': widget.note?.id ?? '',
@@ -95,7 +93,7 @@ if (userId == null) {
       } else {
         // Offline - Save only locally
         await SecureStorage.saveNoteLocally(localNote);
-         Navigator.pop(context, true);
+        Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No internet. Saved locally only.')),
         );
@@ -107,7 +105,8 @@ if (userId == null) {
       await SecureStorage.saveNoteLocally(localNote);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to save to cloud. Saved locally.')),
+        const SnackBar(
+            content: Text('Failed to save to cloud. Saved locally.')),
       );
 
       Navigator.pop(context, true);
@@ -117,48 +116,59 @@ if (userId == null) {
       });
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
-          'Note',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        backgroundColor: AppColors.primary,
         elevation: 0,
+        backgroundColor: AppColors.primary,
         iconTheme: const IconThemeData(color: Colors.white),
         titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20),
+        automaticallyImplyLeading: true,
+        title: SizedBox(
+          height: 40,
+          child: TextField(
+            controller: titleController,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+            decoration: const InputDecoration(
+              hintText: 'Title',
+              border: InputBorder.none,
+              isCollapsed: true,
+              hintStyle: TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        ),
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: TextField(
-              controller: titleController,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-              decoration: const InputDecoration(
-                hintText: 'Title',
-                border: InputBorder.none,
-              ),
-            ),
-          ),
-          const Divider(thickness: 0.5),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TextField(
-                controller: contentController,
-                style: const TextStyle(fontSize: 16, height: 1.6),
-                maxLines: null,
-                expands: true,
-                decoration: const InputDecoration(
-                  hintText: 'Start writing...',
-                  border: InputBorder.none,
+            child: Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: TextField(
+                  controller: contentController,
+                  style: const TextStyle(fontSize: 16, height: 1.6),
+                  maxLines: null,
+                  expands: true,
+                  decoration: const InputDecoration(
+                    hintText: 'Start writing...',
+                    border: InputBorder.none,
+                  ),
                 ),
               ),
             ),
@@ -176,17 +186,15 @@ if (userId == null) {
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
           onPressed: () {
-              _isSaving ? null : saveNote();
+            _isSaving ? null : saveNote();
           },
-         
           label: const Text(
             'Save Note',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white),
+            style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white),
           ),
         ),
       ),
     );
   }
-
- 
 }
